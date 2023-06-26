@@ -1,7 +1,7 @@
 PORT ?= 8000
 
 dev:
-	poetry run flask --app page_analyzer:app run
+	poetry run flask --app page_analyzer:app --debug run
 
 lint:
 	poetry run flake8

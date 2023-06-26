@@ -2,9 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Title</title>
+  <title>Анализатор страниц</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
 </head>
 <body>
-  Hello!
+  <header class="navbar navbar-expand-lg bg-dark">
+    <ul class="navbar-nav">
+      <li class="nav-item active">
+        <a class="nav-link text-light" href="">Анализатор страниц </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-secondary" href="">Сайты</a>
+      </li>
+    </ul>
+  </header>
+  <div class="card w-50 p-5 mx-auto mt-4 bg-light">
+    <div class="card-body">
+      <p class="card-title h1">Анализатор страниц</p>
+      <form>
+        <legend>Бесплатно проверяйте сайты на SEO-пригодность</legend>
+        <input class="w-50 p-2" type="text" placeholder="https://example.com">
+        <button type="submit" class="btn btn-primary w-25 p-2">Проверить</button>
+      </form>
+    </div>
+  </div>
+  <footer class="fixed-bottom border p-3 text-center">
+    <a href="https://ru.hexlet.io/">Hexlet</a>
+  </footer>
 </body>
 </html>
