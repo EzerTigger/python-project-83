@@ -26,13 +26,21 @@
           <tr>
             <th>ID</th>
             <th>Имя</th>
+            <th>Последняя проверка</th>
           </tr>
         </thead>
         <tbody>
           {% for site in sites %}
             <tr>
               <td>{{ site[0] }}</td>
-              <td>{{ site[1] }}</td>
+              <td>
+                <a href="{{ url_for('url_get', id=site[0]) }}">{{ site[1] }}</a>
+              </td>
+              {% if site[2] %}
+                <td>{{ site[2] }}</td>
+              {% else %}
+                <td></td>
+              {% endif %}
             </tr>
           {% endfor %}
         </tbody>

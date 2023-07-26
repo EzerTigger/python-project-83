@@ -39,10 +39,11 @@ def urls_post():
             site_id = cur.fetchone()[0]
             cur.close()
             conn.close()
+            flash('Страница успешно добавлена', 'success')
         else:
             cur.execute('SELECT id FROM urls WHERE name = (%s)', (url,))
             site_id = cur.fetchone()[0]
-            flash('Страница уже существует', 'warning')
+            flash('Страница уже существует', 'info')
         return redirect(url_for('url_get', id=site_id))
     else:
         flash('Некорректный url', 'error')
@@ -51,11 +52,17 @@ def urls_post():
 
 @app.route('/urls/<id>')
 def url_get(id):
-    messages = get_flashed_messages()
+    checks = []
+    messages = get_flashed_messages(with_categories=True)
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
     cur.execute('SELECT * FROM urls WHERE id = (%s)', (id,))
     site_id, site_name, site_created_at = cur.fetchone()
+    cur.execute('SELECT id, created_at FROM url_checks WHERE url_id = (%s)',
+                (id,))
+    data = cur.fetchall()
+    if data:
+        checks = data
     cur.close()
     conn.close()
     return render_template(
@@ -63,6 +70,7 @@ def url_get(id):
         site_id=site_id,
         site_name=site_name,
         site_created_at=site_created_at,
+        checks=checks,
         messages=messages,
     )
 
@@ -71,7 +79,10 @@ def url_get(id):
 def urls_get():
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
-    cur.execute('SELECT * FROM urls ORDER BY created_at DESC')
+    cur.execute('SELECT urls.id AS url_id, urls.name AS url_name, '
+                'MAX(url_checks.created_at) AS check_created_at FROM urls '
+                'LEFT JOIN url_checks ON urls.id = url_checks.url_id '
+                'GROUP BY urls.id ORDER BY urls.created_at DESC')
     sites = cur.fetchall()
     cur.close()
     conn.close()
@@ -79,3 +90,17 @@ def urls_get():
         'urls.html',
         sites=sites
     )
+
+
+@app.post('/urls/<id>/checks')
+def url_check(id):
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    today = datetime.datetime.now()
+    created_at = datetime.date(today.year, today.month, today.day)
+    cur.execute('INSERT INTO url_checks (url_id, created_at) VALUES (%s, %s)',
+                (id, created_at))
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for('url_get', id=id))

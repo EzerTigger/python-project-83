@@ -19,7 +19,9 @@
   </header>
 
   {% if messages %}
-    <div class="alert alert-info" role="alert">Страница уже существует</div>
+    {% for message in messages %}
+      <div class="alert alert-{{ message[0] }}" role="alert">{{ message[1] }}</div>
+    {% endfor %}
   {% endif %}
 
   <main class="flex-grow-1">
@@ -39,6 +41,38 @@
           <td>{{ site_created_at }}</td>
         </tr>
       </table>
+
+      <h2 class="mt-5 mb-3">Проверки</h2>
+        <form method="post" action="/urls/{{ site_id }}/checks">
+          <input type="submit" class="btn btn-primary" value="Запустить проверку">
+        </form>
+
+      <div>
+        <table class="table table-bordered table-hover mt-2" data-test="checks">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Код ответа</th>
+              <th>h1</th>
+              <th>title</th>
+              <th>description</th>
+              <th>Дата создания</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for check in checks %}
+            <tr>
+              <td>{{ check[0] }}</td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td></td>
+              <td>{{ check[1] }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </main>
 </body>
