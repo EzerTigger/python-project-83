@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL_DEV')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 @app.route('/')
