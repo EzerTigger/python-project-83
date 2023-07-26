@@ -27,6 +27,7 @@
             <th>ID</th>
             <th>Имя</th>
             <th>Последняя проверка</th>
+            <th>Код ответа</th>
           </tr>
         </thead>
         <tbody>
@@ -38,6 +39,11 @@
               </td>
               {% if site[2] %}
                 <td>{{ site[2] }}</td>
+              {% else %}
+                <td></td>
+              {% endif %}
+              {% if site[3] %}
+                <td>{{ site[3] }}</td>
               {% else %}
                 <td></td>
               {% endif %}

@@ -63,11 +63,15 @@
           {% for check in checks %}
             <tr>
               <td>{{ check[0] }}</td>
+              {% if check[1] %}
+                <td>{{ check[1] }}</td>
+              {% else %}
+                <td></td>
+              {% endif %}
               <td></td>
               <td></td>
               <td></td>
-              <td></td>
-              <td>{{ check[1] }}</td>
+              <td>{{ check[2] }}</td>
             </tr>
           {% endfor %}
           </tbody>
