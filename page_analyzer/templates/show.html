@@ -68,10 +68,22 @@
               {% else %}
                 <td></td>
               {% endif %}
-              <td></td>
-              <td></td>
-              <td></td>
-              <td>{{ check[2] }}</td>
+              {% if check[2] %}
+                <td>{{ check[2] }}</td>
+              {% else %}
+                <td></td>
+              {% endif %}
+              {% if check[3] %}
+                <td>{{ check[3] }}</td>
+              {% else %}
+                <td></td>
+              {% endif %}
+              {% if check[4] %}
+                <td>{{ check[4] }}</td>
+              {% else %}
+                <td></td>
+              {% endif %}
+              <td>{{ check[5] }}</td>
             </tr>
           {% endfor %}
           </tbody>
