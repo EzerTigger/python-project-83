@@ -17,10 +17,12 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 @app.route('/')
 def index():
     messages = get_flashed_messages(with_categories=True)
-    return render_template(
-        'index.html',
-        messages=messages
-    )
+    if messages:
+        return render_template(
+            'index.html',
+            messages=messages
+        ), 422
+    return render_template('index.html')
 
 
 @app.post('/urls/')
