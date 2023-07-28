@@ -7,11 +7,19 @@ import validators
 import requests
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse
+
 
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
 DATABASE_URL = os.getenv('DATABASE_URL')
+
+
+def normalize_url(url):
+    o = urlparse(url)
+    name = o.netloc
+    return f'https://{name}/'
 
 
 @app.route('/')
@@ -27,7 +35,7 @@ def index():
 
 @app.post('/urls/')
 def urls_post():
-    url = request.form.to_dict()['url']
+    url = normalize_url(request.form.to_dict()['url'])
     if validators.url(url):
         today = datetime.datetime.now()
         created_at = datetime.date(today.year, today.month, today.day)
