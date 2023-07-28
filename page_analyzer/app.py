@@ -18,19 +18,17 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 def normalize_url(url):
     o = urlparse(url)
-    name = o.netloc
-    return f'https://{name}/'
+    name = o.netloc + o.path
+    return f'https://{name}'
 
 
 @app.route('/')
 def index():
     messages = get_flashed_messages(with_categories=True)
-    if messages:
-        return render_template(
-            'index.html',
-            messages=messages
-        ), 422
-    return render_template('index.html')
+    return render_template(
+        'index.html',
+        messages=messages
+    )
 
 
 @app.post('/urls/')
