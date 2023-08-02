@@ -18,7 +18,7 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 def normalize_url(url):
     o = urlparse(url)
-    name = o.netloc + o.path
+    name = o.netloc
     return f'https://{name}'
 
 
