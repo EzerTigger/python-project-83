@@ -65,7 +65,7 @@ def urls_post():
         ), 422
 
 
-@app.route('/urls/<id>')
+@app.route('/urls/<int:id>')
 def url_get(id):
     checks = []
     messages = get_flashed_messages(with_categories=True)
