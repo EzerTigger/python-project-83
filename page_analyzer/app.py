@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL_DEV')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 def normalize_url(url):
