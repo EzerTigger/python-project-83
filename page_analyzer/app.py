@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL_DEV')
 
 
 def normalize_url(url):
@@ -33,25 +33,26 @@ def index():
 
 @app.post('/urls/')
 def urls_post():
-    url = normalize_url(request.form.to_dict()['url'])
+    url = request.form.to_dict()['url']
     if validators.url(url):
+        norm_url = normalize_url(url)
         today = datetime.datetime.now()
         created_at = datetime.date(today.year, today.month, today.day)
         conn = psycopg2.connect(DATABASE_URL)
         cur = conn.cursor()
         cur.execute('SELECT name FROM urls')
         urls = [data[0] for data in cur.fetchall()]
-        if url not in urls:
+        if norm_url not in urls:
             cur.execute('INSERT INTO urls (name, created_at) VALUES (%s, %s)',
-                        (url, created_at))
+                        (norm_url, created_at))
             conn.commit()
-            cur.execute('SELECT id FROM urls WHERE name = (%s)', (url,))
+            cur.execute('SELECT id FROM urls WHERE name = (%s)', (norm_url,))
             site_id = cur.fetchone()[0]
             cur.close()
             conn.close()
             flash('Страница успешно добавлена', 'success')
         else:
-            cur.execute('SELECT id FROM urls WHERE name = (%s)', (url,))
+            cur.execute('SELECT id FROM urls WHERE name = (%s)', (norm_url,))
             site_id = cur.fetchone()[0]
             flash('Страница уже существует', 'info')
         return redirect(url_for('url_get', id=site_id))
