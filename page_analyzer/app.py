@@ -13,13 +13,13 @@ from urllib.parse import urlparse
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL_DEV')
 
 
 def normalize_url(url):
     o = urlparse(url)
     name = o.netloc
-    return f'https://{name}'
+    return f'http://{name}'
 
 
 @app.route('/')
