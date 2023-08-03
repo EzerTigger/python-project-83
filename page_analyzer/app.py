@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL_DEV')
 
 
 def normalize_url(url):
@@ -124,20 +124,23 @@ def url_check(id):
     try:
         r = requests.get(url)
         code = r.status_code
-        soup = BeautifulSoup(r.text, 'html.parser')
-        if soup.h1:
-            h1 = soup.h1.string
-        if soup.title:
-            title = soup.title.string
-        meta = soup.find('meta', attrs={'name': 'description'})
-        if meta:
-            description = meta.get('content')
-        cur.execute('INSERT INTO url_checks '
-                    '(url_id, status_code, h1, title, description, created_at) '
-                    'VALUES (%s, %s, %s, %s, %s, %s)',
-                    (id, code, h1, title, description, created_at))
-        conn.commit()
-        flash('Страница успешно проверена', 'success')
+        if code == 200:
+            soup = BeautifulSoup(r.text, 'html.parser')
+            if soup.h1:
+                h1 = soup.h1.string
+            if soup.title:
+                title = soup.title.string
+            meta = soup.find('meta', attrs={'name': 'description'})
+            if meta:
+                description = meta.get('content')
+            cur.execute('INSERT INTO url_checks '
+                        '(url_id, status_code, h1, title, description, created_at) '
+                        'VALUES (%s, %s, %s, %s, %s, %s)',
+                        (id, code, h1, title, description, created_at))
+            conn.commit()
+            flash('Страница успешно проверена', 'success')
+        else:
+            flash('Произошла ошибка при проверке', 'danger')
     except requests.exceptions.ConnectionError:
         flash('Произошла ошибка при проверке', 'danger')
 
