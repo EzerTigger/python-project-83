@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL_DEV')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 def normalize_url(url):
@@ -134,7 +134,8 @@ def url_check(id):
             if meta:
                 description = meta.get('content')
             cur.execute('INSERT INTO url_checks '
-                        '(url_id, status_code, h1, title, description, created_at) '
+                        '(url_id, status_code, '
+                        'h1, title, description, created_at) '
                         'VALUES (%s, %s, %s, %s, %s, %s)',
                         (id, code, h1, title, description, created_at))
             conn.commit()
