@@ -34,8 +34,8 @@ def index():
 @app.post('/urls/')
 def urls_post():
     url = request.form.to_dict()['url']
-    if validators.url(url):
-        norm_url = normalize_url(url)
+    norm_url = normalize_url(url)
+    if validators.url(norm_url):
         today = datetime.datetime.now()
         created_at = datetime.date(today.year, today.month, today.day)
         conn = psycopg2.connect(DATABASE_URL)
