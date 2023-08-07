@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL_DEV')
 
 
 def normalize_url(url):
@@ -66,7 +66,7 @@ def urls_post():
         ), 422
 
 
-@app.route('/urls/<int:id>')
+@app.route('/urls/<int:id>/')
 def url_get(id):
     checks = []
     messages = get_flashed_messages(with_categories=True)
