@@ -18,8 +18,9 @@ DATABASE_URL = os.getenv('DATABASE_URL')
 
 def normalize_url(url):
     o = urlparse(url)
+    scheme = o.scheme
     name = o.netloc
-    return f'http://{name}'
+    return f'{scheme}://{name}'
 
 
 @app.route('/')
@@ -123,26 +124,26 @@ def url_check(id):
     url = cur.fetchone()[0]
     try:
         r = requests.get(url)
+        r.raise_for_status()
         code = r.status_code
-        if code == 200:
-            soup = BeautifulSoup(r.text, 'html.parser')
-            if soup.h1:
-                h1 = soup.h1.string
-            if soup.title:
-                title = soup.title.string
-            meta = soup.find('meta', attrs={'name': 'description'})
-            if meta:
-                description = meta.get('content')
-            cur.execute('INSERT INTO url_checks '
-                        '(url_id, status_code, '
-                        'h1, title, description, created_at) '
-                        'VALUES (%s, %s, %s, %s, %s, %s)',
-                        (id, code, h1, title, description, created_at))
-            conn.commit()
-            flash('Страница успешно проверена', 'success')
-        else:
-            flash('Произошла ошибка при проверке', 'danger')
-    except requests.exceptions.ConnectionError:
+
+        soup = BeautifulSoup(r.text, 'html.parser')
+        if soup.h1:
+            h1 = soup.h1.string
+        if soup.title:
+            title = soup.title.string
+        meta = soup.find('meta', attrs={'name': 'description'})
+        if meta:
+            description = meta.get('content')
+        cur.execute('INSERT INTO url_checks '
+                    '(url_id, status_code, '
+                    'h1, title, description, created_at) '
+                    'VALUES (%s, %s, %s, %s, %s, %s)',
+                    (id, code, h1, title, description, created_at))
+        conn.commit()
+        flash('Страница успешно проверена', 'success')
+
+    except requests.RequestException:
         flash('Произошла ошибка при проверке', 'danger')
 
     cur.close()
