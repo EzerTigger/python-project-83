@@ -66,7 +66,7 @@ def urls_post():
         ), 422
 
 
-@app.route('/urls/<int:id>/')
+@app.route('/urls/<int:id>')
 def url_get(id):
     checks = []
     messages = get_flashed_messages(with_categories=True)
@@ -92,7 +92,7 @@ def url_get(id):
     )
 
 
-@app.get('/urls/')
+@app.get('/urls')
 def urls_get():
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
