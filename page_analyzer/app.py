@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL_DEV')
 
 
 def normalize_url(url):
@@ -32,7 +32,7 @@ def index():
     )
 
 
-@app.post('/urls/')
+@app.post('/urls')
 def urls_post():
     url = request.form.to_dict()['url']
     if validators.url(url):
@@ -92,7 +92,7 @@ def url_get(id):
     )
 
 
-@app.route('/urls/')
+@app.get('/urls/')
 def urls_get():
     conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
