@@ -56,6 +56,8 @@ def urls_post():
             cur.execute('SELECT id FROM urls WHERE name = (%s)', (norm_url,))
             site_id = cur.fetchone()[0]
             flash('Страница уже существует', 'info')
+            cur.close()
+            conn.close()
         return redirect(url_for('url_get', id=site_id))
     else:
         flash('Некорректный url', 'danger')
