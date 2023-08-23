@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL_DEV')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 def normalize_url(url):
@@ -126,7 +126,7 @@ def url_check(id):
     url = cur.fetchone()[0]
 
     r = requests.get(url)
-    #r.raise_for_status()
+    # r.raise_for_status()
     code = r.status_code
     if code != 200:
         cur.close()
@@ -152,5 +152,3 @@ def url_check(id):
         cur.close()
         conn.close()
         return redirect(url_for('url_get', id=id))
-
-
