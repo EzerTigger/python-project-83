@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL_DEV')
 
 
 def normalize_url(url):
@@ -124,11 +124,16 @@ def url_check(id):
     created_at = datetime.date(today.year, today.month, today.day)
     cur.execute('SELECT name FROM urls WHERE id = (%s)', (id,))
     url = cur.fetchone()[0]
-    try:
-        r = requests.get(url)
-        r.raise_for_status()
-        code = r.status_code
 
+    r = requests.get(url)
+    #r.raise_for_status()
+    code = r.status_code
+    if code != 200:
+        cur.close()
+        conn.close()
+        flash('Произошла ошибка при проверке', 'danger')
+        return redirect(url_for('url_get', id=id))
+    else:
         soup = BeautifulSoup(r.text, 'html.parser')
         if soup.h1:
             h1 = soup.h1.string
@@ -144,10 +149,8 @@ def url_check(id):
                     (id, code, h1, title, description, created_at))
         conn.commit()
         flash('Страница успешно проверена', 'success')
+        cur.close()
+        conn.close()
+        return redirect(url_for('url_get', id=id))
 
-    except requests.RequestException:
-        flash('Произошла ошибка при проверке', 'danger')
 
-    cur.close()
-    conn.close()
-    return redirect(url_for('url_get', id=id))
