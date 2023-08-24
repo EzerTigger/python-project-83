@@ -118,20 +118,17 @@ def url_check(id):
     h1 = ''
     title = ''
     description = ''
+    conn = psycopg2.connect(DATABASE_URL)
+    cur = conn.cursor()
+    today = datetime.datetime.now()
+    created_at = datetime.date(today.year, today.month, today.day)
+    cur.execute('SELECT name FROM urls WHERE id = (%s)', (id,))
+    url = cur.fetchone()[0]
     try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cur = conn.cursor()
-        today = datetime.datetime.now()
-        created_at = datetime.date(today.year, today.month, today.day)
-        cur.execute('SELECT name FROM urls WHERE id = (%s)', (id,))
-        url = cur.fetchone()[0]
-
         r = requests.get(url)
         # r.raise_for_status()
         code = r.status_code
         if code != 200:
-            cur.close()
-            conn.close()
             flash('Произошла ошибка при проверке', 'danger')
             return redirect(url_for('url_get', id=id))
         else:
@@ -150,11 +147,10 @@ def url_check(id):
                         (id, code, h1, title, description, created_at))
             conn.commit()
             flash('Страница успешно проверена', 'success')
-            cur.close()
-            conn.close()
             return redirect(url_for('url_get', id=id))
     except Exception:
-        cur.close()
-        conn.close()
         flash('Произошла ошибка при проверке', 'danger')
         return redirect(url_for('url_get', id=id))
+    finally:
+        cur.close()
+        conn.close()
