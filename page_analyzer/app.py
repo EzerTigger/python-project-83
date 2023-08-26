@@ -126,7 +126,7 @@ def url_check(id):
     url = cur.fetchone()[0]
     try:
         r = requests.get(url)
-        # r.raise_for_status()
+        r.raise_for_status()
         code = r.status_code
         if code != 200:
             flash('Произошла ошибка при проверке', 'danger')
@@ -154,3 +154,13 @@ def url_check(id):
     finally:
         cur.close()
         conn.close()
+
+
+@app.errorhandler(404)
+def page_not_found(error):
+    return 'Страница не найдена', 404
+
+
+@app.errorhandler(500)
+def server_error(error):
+    return 'Ошибка сервера', 500
