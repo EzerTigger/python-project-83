@@ -23,6 +23,11 @@ def normalize_url(url):
     return f'{scheme}://{name}'
 
 
+def connect_db():
+    conn = psycopg2.connect(DATABASE_URL)
+    return conn
+
+
 @app.route('/')
 def index():
     return render_template(
@@ -38,7 +43,7 @@ def urls_post():
 
         today = datetime.datetime.now()
         created_at = datetime.date(today.year, today.month, today.day)
-        conn = psycopg2.connect(DATABASE_URL)
+        conn = connect_db()
         cur = conn.cursor()
         cur.execute('SELECT name FROM urls')
         urls = [data[0] for data in cur.fetchall()]
@@ -72,7 +77,7 @@ def urls_post():
 def url_get(id):
     checks = []
     messages = get_flashed_messages(with_categories=True)
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = connect_db()
     cur = conn.cursor()
     cur.execute('SELECT * FROM urls WHERE id = (%s)', (id,))
     site_id, site_name, site_created_at = cur.fetchone()
@@ -96,7 +101,7 @@ def url_get(id):
 
 @app.get('/urls')
 def urls_get():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = connect_db()
     cur = conn.cursor()
     cur.execute('SELECT urls.id AS url_id, urls.name AS url_name, '
                 'MAX(url_checks.created_at) AS check_created_at,'
@@ -118,7 +123,7 @@ def url_check(id):
     h1 = ''
     title = ''
     description = ''
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = connect_db()
     cur = conn.cursor()
     today = datetime.datetime.now()
     created_at = datetime.date(today.year, today.month, today.day)
