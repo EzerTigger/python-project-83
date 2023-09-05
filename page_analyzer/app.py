@@ -14,7 +14,7 @@ from psycopg2.extras import NamedTupleCursor
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL_DEV')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 
 def normalize_url(url):
