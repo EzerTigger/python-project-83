@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, get_flashed_messages
+from flask import Flask, render_template, request, flash
 from flask import redirect, url_for
 import psycopg2
 import os
@@ -91,7 +91,6 @@ def urls_post():
 @app.route('/urls/<int:id>')
 def url_get(id):
     checks = []
-    messages = get_flashed_messages(with_categories=True)
     conn = connect_db()
     cur = conn.cursor()
     cur.execute('SELECT * FROM urls WHERE id = (%s)', (id,))
@@ -110,7 +109,6 @@ def url_get(id):
         site_name=site_name,
         site_created_at=site_created_at,
         checks=checks,
-        messages=messages,
     )
 
 
