@@ -40,6 +40,23 @@ def connect_db():
     return conn
 
 
+def page_parser(content):
+    soup = BeautifulSoup(content, 'html.parser')
+    title: str = soup.find('title').text if soup.find('title') else ''
+    h1: str = soup.find('h1').text if soup.find('h1') else ''
+    description: str = ''
+    description_meta = soup.find('meta', attrs={'name': 'description'})
+
+    if description_meta:
+        description = description_meta['content']
+
+    return {
+        'title': title,
+        'h1': h1,
+        'description': description
+    }
+
+
 @app.route('/')
 def index():
     return render_template(
@@ -145,45 +162,38 @@ def urls_get():
 
 @app.post('/urls/<id>/checks')
 def url_check(id):
-    h1 = ''
-    title = ''
-    description = ''
     conn = connect_db()
-    cur = conn.cursor()
-    today = datetime.datetime.now()
-    created_at = datetime.date(today.year, today.month, today.day)
-    cur.execute('SELECT name FROM urls WHERE id = (%s)', (id,))
-    url = cur.fetchone()[0]
+
+    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
+        cursor.execute(
+            'SELECT * from urls where id=%s', (id,)
+        )
+        url = cursor.fetchone()
+
     try:
-        r = requests.get(url)
-        r.raise_for_status()
-        code = r.status_code
-        if code != 200:
-            flash('Произошла ошибка при проверке', 'danger')
-            return redirect(url_for('url_get', id=id))
-        else:
-            soup = BeautifulSoup(r.text, 'html.parser')
-            if soup.h1:
-                h1 = soup.h1.text
-            if soup.title:
-                title = soup.title.text
-            meta = soup.find('meta', attrs={'name': 'description'})
-            if meta:
-                description = meta.get('content')
-            cur.execute('INSERT INTO url_checks '
-                        '(url_id, status_code, '
-                        'h1, title, description, created_at) '
-                        'VALUES (%s, %s, %s, %s, %s, %s)',
-                        (id, code, h1, title, description, created_at))
-            conn.commit()
-            flash('Страница успешно проверена', 'success')
-            return redirect(url_for('url_get', id=id))
-    except Exception:
+        response = requests.get(url.name)
+        response.raise_for_status()
+    except requests.exceptions.RequestException:
         flash('Произошла ошибка при проверке', 'danger')
         return redirect(url_for('url_get', id=id))
-    finally:
-        cur.close()
-        conn.close()
+
+    page_content = response.text
+    page_content = page_parser(page_content)
+
+    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
+        cursor.execute(
+            'INSERT INTO url_checks (url_id, status_code, h1,'
+            ' title, description, created_at) values '
+            '(%s, %s, %s, %s, %s, %s)',
+            (id, response.status_code, page_content.get('h1'),
+             page_content.get('title'), page_content.get('description'),
+             datetime.datetime.now(),)
+        )
+        flash('Страница успешно проверена', 'success')
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('url_get', id=id))
 
 
 @app.errorhandler(404)
