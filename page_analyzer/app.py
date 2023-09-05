@@ -8,12 +8,13 @@ import requests
 from dotenv import load_dotenv
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse
+from psycopg2.extras import NamedTupleCursor
 
 
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL_DEV')
 
 
 def normalize_url(url):
@@ -48,39 +49,43 @@ def index():
 
 @app.post('/urls')
 def urls_post():
-    url = request.form.to_dict()['url']
-    norm_url = normalize_url(url)
-    if validators.url(norm_url):
-        today = datetime.datetime.now()
-        created_at = datetime.date(today.year, today.month, today.day)
-        conn = connect_db()
-        cur = conn.cursor()
-        cur.execute('SELECT name FROM urls')
-        urls = [data[0] for data in cur.fetchall()]
-        if norm_url not in urls:
-            cur.execute('INSERT INTO urls (name, created_at) VALUES (%s, %s)',
-                        (norm_url, created_at))
-            conn.commit()
-            cur.execute('SELECT id FROM urls WHERE name = (%s)', (norm_url,))
-            site_id = cur.fetchone()[0]
-            cur.close()
-            conn.close()
-            flash('Страница успешно добавлена', 'success')
-        else:
-            cur.execute('SELECT id FROM urls WHERE name = (%s)', (norm_url,))
-            site_id = cur.fetchone()[0]
-            flash('Страница уже существует', 'info')
-            cur.close()
-            conn.close()
-        return redirect(url_for('url_get', id=site_id)), 301
-    else:
-        flash('Некорректный url', 'danger')
-        messages = get_flashed_messages(with_categories=True)
+    url = request.form.to_dict().get('url')
+    errors = validate(url)
+    if errors:
+        for error in errors:
+            flash(error, 'danger')
         return render_template(
             'index.html',
-            messages=messages,
-            url=url
+            url_name=url
         ), 422
+
+    url = normalize_url(url)
+
+    conn = connect_db()
+    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
+
+        cursor.execute(
+            "SELECT * from urls where name=(%s)", (url,)
+        )
+        fetched_data = cursor.fetchone()
+        if fetched_data:
+            url_id: int = fetched_data.id
+            flash('Страница уже существует', 'info')
+
+        else:
+            cursor.execute(
+                "INSERT INTO urls "
+                "(name, created_at) "
+                "VALUES (%s, %s) RETURNING id;",
+                (url, datetime.datetime.now(),)
+            )
+            url_id: int = cursor.fetchone().id
+            flash('Страница успешно добавлена', 'success')
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for('url_get', id=url_id)), 301
 
 
 @app.route('/urls/<int:id>')
