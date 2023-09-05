@@ -23,6 +23,17 @@ def normalize_url(url):
     return f'{scheme}://{name}'
 
 
+def validate(start_url):
+    errors = []
+    if len(start_url) > 255:
+        errors.append('URL превышает 255 символов')
+    if not validators.url(start_url):
+        errors.append('Некорректный URL')
+    if not start_url:
+        errors.append('URL обязателен')
+    return errors
+
+
 def connect_db():
     conn = psycopg2.connect(DATABASE_URL)
     return conn
@@ -40,7 +51,6 @@ def urls_post():
     url = request.form.to_dict()['url']
     norm_url = normalize_url(url)
     if validators.url(norm_url):
-
         today = datetime.datetime.now()
         created_at = datetime.date(today.year, today.month, today.day)
         conn = connect_db()
@@ -62,7 +72,7 @@ def urls_post():
             flash('Страница уже существует', 'info')
             cur.close()
             conn.close()
-        return redirect(url_for('url_get', id=site_id))
+        return redirect(url_for('url_get', id=site_id)), 301
     else:
         flash('Некорректный url', 'danger')
         messages = get_flashed_messages(with_categories=True)
