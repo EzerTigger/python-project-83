@@ -14,7 +14,7 @@ from psycopg2.extras import NamedTupleCursor
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL_DEV')
 
 
 def normalize_url(url):
@@ -117,19 +117,25 @@ def url_get(id):
 @app.get('/urls')
 def urls_get():
     conn = connect_db()
-    cur = conn.cursor()
-    cur.execute('SELECT urls.id AS url_id, urls.name AS url_name, '
-                'MAX(url_checks.created_at) AS check_created_at,'
-                'url_checks.status_code AS status_code FROM urls '
-                'LEFT JOIN url_checks ON urls.id = url_checks.url_id '
-                'GROUP BY urls.id, url_checks.status_code '
-                'ORDER BY urls.created_at DESC')
-    sites = cur.fetchall()
-    cur.close()
+    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
+        cursor.execute(
+            "SELECT * from urls order by id desc"
+        )
+
+        available_urls = cursor.fetchall()
+
+        cursor.execute(
+            "SELECT DISTINCT on (url_id) * from url_checks "
+            "order by url_id desc, id desc"
+        )
+
+        checks = cursor.fetchall()
+
     conn.close()
+
     return render_template(
         'urls.html',
-        sites=sites
+        data=list(zip(available_urls, checks)),
     )
 
 

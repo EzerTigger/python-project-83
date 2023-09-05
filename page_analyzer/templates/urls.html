@@ -30,24 +30,31 @@
           </tr>
         </thead>
         <tbody>
-          {% for site in sites %}
-            <tr>
-              <td>{{ site[0] }}</td>
+          {% if data %}
+          {% for url, check in data %}
+          <tr>
               <td>
-                <a href="{{ url_for('url_get', id=site[0]) }}">{{ site[1] }}</a>
+                  {{ url.id }}
               </td>
-              {% if site[2] %}
-                <td>{{ site[2] }}</td>
+              <td>
+                  <a href="{{ url_for('url_get', id=url.id) }}">
+                      {{ url.name }}
+                  </a>
+              </td>
+              {% if check %}
+              <td>
+                  {{ check.created_at }}
+              </td>
+              <td>
+                  {{ check.status_code }}
+              </td>
               {% else %}
-                <td></td>
+              <td></td>
+              <td></td>
               {% endif %}
-              {% if site[3] %}
-                <td>{{ site[3] }}</td>
-              {% else %}
-                <td></td>
-              {% endif %}
-            </tr>
+          </tr>
           {% endfor %}
+          {% endif %}
         </tbody>
       </table>
     </div>
