@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, flash
-from flask import redirect, url_for
+from flask import redirect, url_for, abort
 import psycopg2
 import os
 import datetime
@@ -90,25 +90,31 @@ def urls_post():
 
 @app.route('/urls/<int:id>')
 def url_get(id):
-    checks = []
     conn = connect_db()
-    cur = conn.cursor()
-    cur.execute('SELECT * FROM urls WHERE id = (%s)', (id,))
-    site_id, site_name, site_created_at = cur.fetchone()
-    cur.execute('SELECT id, status_code, h1, title, description, created_at '
-                'FROM url_checks WHERE url_id = (%s)',
-                (id,))
-    data = cur.fetchall()
-    if data:
-        checks = data
-    cur.close()
+
+    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
+        cursor.execute(
+            'SELECT * FROM urls where id=%s', (id,)
+        )
+        url = cursor.fetchone()
+
+        if not url:
+            abort(404)
+
+    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
+        cursor.execute(
+            'SELECT * from url_checks '
+            'where url_id=%s order by id desc', (id,)
+        )
+
+        checks = cursor.fetchall()
+
     conn.close()
+
     return render_template(
         'show.html',
-        site_id=site_id,
-        site_name=site_name,
-        site_created_at=site_created_at,
-        checks=checks,
+        url=url,
+        checks=checks
     )
 
 
