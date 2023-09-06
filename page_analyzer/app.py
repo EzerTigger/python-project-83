@@ -14,7 +14,7 @@ from psycopg2.extras import NamedTupleCursor
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(12).hex()
-DATABASE_URL = os.getenv('DATABASE_URL')
+app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
 
 
 def normalize_url(url):
@@ -36,7 +36,7 @@ def validate(start_url):
 
 
 def connect_db():
-    conn = psycopg2.connect(DATABASE_URL)
+    conn = psycopg2.connect(app.config['DATABASE_URL'])
     return conn
 
 
