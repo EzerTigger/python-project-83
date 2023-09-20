@@ -160,9 +160,9 @@ def url_check(id):
 
 @app.errorhandler(404)
 def page_not_found(error):
-    return 'Страница не найдена', 404
+    return render_template('error/404.html'), 404
 
 
 @app.errorhandler(500)
 def server_error(error):
-    return 'Ошибка сервера', 500
+    return render_template('error/500.html'), 500
