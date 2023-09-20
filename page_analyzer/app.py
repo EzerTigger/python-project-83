@@ -1,25 +1,18 @@
 from flask import Flask, render_template, request, flash
-from flask import redirect, url_for, abort
-import psycopg2
+from flask import redirect, url_for
 import os
-import datetime
 from dotenv import load_dotenv
-from psycopg2.extras import NamedTupleCursor
 
 from page_analyzer.urls import normalize_url, validate
 from page_analyzer.parser import page_parser
 from page_analyzer.requests import get_response
+from page_analyzer.database import get_url_by_name, add_url, get_url_with_checks
+from page_analyzer.database import get_urls, get_url_by_id, add_check
 
 
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
-app.config['DATABASE_URL'] = os.getenv('DATABASE_URL')
-
-
-def connect_db():
-    conn = psycopg2.connect(app.config['DATABASE_URL'])
-    return conn
 
 
 @app.route('/')
@@ -43,55 +36,21 @@ def urls_post():
 
     url = normalize_url(url)
 
-    conn = connect_db()
-    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
+    fetched_data = get_url_by_name(url)
+    if fetched_data:
+        url_id: int = fetched_data.id
+        flash('Страница уже существует', 'info')
 
-        cursor.execute(
-            "SELECT * from urls where name=(%s)", (url,)
-        )
-        fetched_data = cursor.fetchone()
-        if fetched_data:
-            url_id: int = fetched_data.id
-            flash('Страница уже существует', 'info')
-
-        else:
-            cursor.execute(
-                "INSERT INTO urls "
-                "(name, created_at) "
-                "VALUES (%s, %s) RETURNING id;",
-                (url, datetime.datetime.now(),)
-            )
-            url_id: int = cursor.fetchone().id
-            flash('Страница успешно добавлена', 'success')
-
-    conn.commit()
-    conn.close()
+    else:
+        url_id: int = add_url(url)
+        flash('Страница успешно добавлена', 'success')
 
     return redirect(url_for('url_get', id=url_id)), 301
 
 
 @app.route('/urls/<int:id>')
 def url_get(id):
-    conn = connect_db()
-
-    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
-        cursor.execute(
-            'SELECT * FROM urls where id=%s', (id,)
-        )
-        url = cursor.fetchone()
-
-        if not url:
-            abort(404)
-
-    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
-        cursor.execute(
-            'SELECT * from url_checks '
-            'where url_id=%s order by id desc', (id,)
-        )
-
-        checks = cursor.fetchall()
-
-    conn.close()
+    url, checks = get_url_with_checks(id)
 
     return render_template(
         'show.html',
@@ -102,22 +61,7 @@ def url_get(id):
 
 @app.get('/urls')
 def urls_get():
-    conn = connect_db()
-    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
-        cursor.execute(
-            "SELECT * from urls order by id desc"
-        )
-
-        available_urls = cursor.fetchall()
-
-        cursor.execute(
-            "SELECT DISTINCT on (url_id) * from url_checks "
-            "order by url_id desc, id desc"
-        )
-
-        checks = cursor.fetchall()
-
-    conn.close()
+    available_urls, checks = get_urls()
 
     return render_template(
         'urls.html',
@@ -127,14 +71,7 @@ def urls_get():
 
 @app.post('/urls/<id>/checks')
 def url_check(id):
-    conn = connect_db()
-
-    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
-        cursor.execute(
-            'SELECT * from urls where id=%s', (id,)
-        )
-        url = cursor.fetchone()
-
+    url = get_url_by_id(id)
     response = get_response(url.name)
     if not response:
         return redirect(url_for('url_get', id=id))
@@ -142,18 +79,7 @@ def url_check(id):
     page_content = response.text
     page_content = page_parser(page_content)
 
-    with conn.cursor(cursor_factory=NamedTupleCursor) as cursor:
-        cursor.execute(
-            'INSERT INTO url_checks (url_id, status_code, h1,'
-            ' title, description, created_at) values '
-            '(%s, %s, %s, %s, %s, %s)',
-            (id, response.status_code, page_content.get('h1'),
-             page_content.get('title'), page_content.get('description'),
-             datetime.datetime.now(),)
-        )
-        flash('Страница успешно проверена', 'success')
-    conn.commit()
-    conn.close()
+    add_check(id, response, page_content)
 
     return redirect(url_for('url_get', id=id))
 
