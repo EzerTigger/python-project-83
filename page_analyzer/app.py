@@ -9,9 +9,8 @@ from page_analyzer.requests import get_response
 from page_analyzer.database import get_url_by_name, add_url, get_url_with_checks
 from page_analyzer.database import get_urls, get_url_by_id, add_check
 
-if "SECRET_KEY" not in os.environ:
-    load_dotenv()
 
+load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
